@@ -13,11 +13,17 @@ import cPickle as pickle
 def main(args):
     # load datasets
     vocab = pickle.load(open(args.vocab_path, 'rb'))
-    train_data = get_loader(args.image_dir, args.json_dir, vocab, transform,
-                            args.batch_size, args.num_workers)
+    train_data = get_loader(args.json_file,
+                            args.mat_file,
+                            vocab,
+                            args.batch_size,
+                            shuffle=True,
+                            num_workers=args.num_workers)
     # get vocab
     # build model
-    encoder = Encoder(args.embed_size, True)
+    if args.encoder:
+        encoder = Encoder(args.embed_size, True)
+
     decoder = Decoder(len(vocab), args.embed_size, args.hidden_size)
     # define loss and optimizer
     criterion = nn.CrossEntropyLoss()
@@ -30,7 +36,10 @@ def main(args):
             images = Variable(images)
             captions = Variable(captions)
             targets = pack_padded_sequence(captions, lengths)[0]
-            images_features = encoder(images)
+            if args.encoder:
+                images_features = encoder(images)
+            else:
+                images_features =
             outputs = decoder(images_features, captions, lengths)
 
             loss = criterion(outputs, target)
@@ -53,6 +62,31 @@ def main(args):
 
 if __name__ == '__mian__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('')
+    parser.add_argument('--model_path', type=str, default='./models/',
+                        help='path for saving trained models')
+    parser.add_argument('--vocab_path', type=str, default='./data/vocab.pkl',
+                        help='path for vocabulary wrapper')
+    parser.add_argument('--json_file', type=str, default='./data/dataset.json',
+                        help='the caption file')
+    parser.add_argument('--mat_file', type=str, default='./data/vgg_feats.mat',
+                        help='the image features file')
+    parser.add_argument('--log_step', type=int, default=10,
+                        help='step size for prining log info')
+    parser.add_argument('--save_step', type=int, default=1000,
+                        help='step size for saving trained models')
+
+    # Model parameters
+    parser.add_argument('--embed_size', type=int, default=256,
+                        help='dimension of word embedding vectors')
+    parser.add_argument('--hidden_size', type=int, default=512,
+                        help='dimension of lstm hidden states')
+    parser.add_argument('--num_layers', type=int, default=1,
+                        help='number of layers in lstm')
+
+    parser.add_argument('--num_epochs', type=int, default=5)
+    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--num_workers', type=int, default=2)
+    parser.add_argument('--learning_rate', type=float, default=0.001)
     args = parser.parse_args()
+    print(args)
     main(args)
