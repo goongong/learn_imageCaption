@@ -22,7 +22,7 @@ class Encoder(nn.Module):
         self.cnn.fc.bias.data.fill_(0)
 
     def forward(self, imgs, pretrained):
-        features = self.vgg(imgs)
+        features = self.cnn(imgs)
         return features
 
 
@@ -31,7 +31,7 @@ class Decoder(nn.Module):
     def __init__(self, in_features, vocab_size, embed_size, hidden_size):
         super(Decoder, self).__init__()
         self.fc = nn.Linear(in_features, embed_size)
-        self.rnn = nn.LSTM(embed_size, hidden_size, 1)
+        self.rnn = nn.LSTM(embed_size, hidden_size, 2)
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.embedder = nn.Embedding(vocab_size, embed_size)
         self.init_weights()
@@ -52,3 +52,20 @@ class Decoder(nn.Module):
         out, _ = self.rnn(packed_embeddings)
         out = self.linear(out[0])
         return out
+
+    def sample(self, features, states):
+        """Samples captions for given image features (Greedy search)."""
+        sampled_ids = []
+        inputs = self.fc(features).unsqueeze(1)
+        print inputs.size()
+        for i in range(20):                                      # maximum sampling length
+            # (batch_size, 1, hidden_size)
+            hiddens, states = self.rnn(inputs, states)
+            # (batch_size, vocab_size)
+            outputs = self.linear(hiddens.squeeze(1))
+            predicted = outputs.max(1)[1]
+            sampled_ids.append(predicted)
+            inputs = self.embedder(predicted)
+        # (batch_size, 20)
+        sampled_ids = torch.cat(sampled_ids, 1)
+        return sampled_ids.squeeze()
