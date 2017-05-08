@@ -1,6 +1,9 @@
 import pickle
 import argparse
 from collections import Counter
+import json
+import os
+import random
 
 
 class Vocabulary(object):
@@ -28,12 +31,13 @@ class Vocabulary(object):
 
 def build_vocab(json_file, threshold):
     """Build a simple vocabulary wrapper."""
-    data = json.load(open('json_file', 'r'))['images']
+    data = json.load(open(json_file, 'r'))
+    data = data['images']
     counter = Counter()
-    ids = len(data)
+    ids = [i for i in range(len(data))]
     for i, id in enumerate(ids):
         caption = random.choice(data[id]['sentences'])['tokens']
-        counter.update(tokens)
+        counter.update(caption)
 
         if i % 1000 == 0:
             print("[%d/%d] Tokenized the captions." % (i, len(ids)))
@@ -56,7 +60,7 @@ def build_vocab(json_file, threshold):
 
 
 def main(args):
-    vocab = build_vocab(json=args.caption_path,
+    vocab = build_vocab(json_file=args.json_file,
                         threshold=args.threshold)
     vocab_path = args.vocab_path
     with open(vocab_path, 'wb') as f:
@@ -67,10 +71,10 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--caption_path', type=str,
-                        default='./data/annotations/captions_train2014.json',
+    parser.add_argument('--json_file', type=str,
+                        default='./data/flickr8k/dataset.json',
                         help='path for train annotation file')
-    parser.add_argument('--vocab_path', type=str, default='./data/vocab.pkl',
+    parser.add_argument('--vocab_path', type=str, default='./data/flickr8k/vocab.pkl',
                         help='path for saving vocabulary wrapper')
     parser.add_argument('--threshold', type=int, default=4,
                         help='minimum word count threshold')

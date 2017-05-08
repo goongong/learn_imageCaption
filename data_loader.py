@@ -2,31 +2,34 @@ import json
 import scipy.io
 import torch
 import torch.utils.data as data
+from collections import defaultdict
+import random
 
 
 class captionData(data.Dataset):
 
     def __init__(self, json_file, mat_file, vocab):
-        self.datset = json.load(open('json_file', 'rb'))
+        self.dataset = json.load(open(json_file, 'rb'))
         features_struct = scipy.io.loadmat(mat_file)
-        self.feats = features_struct['feats']
+        self.feats = features_struct['feats'].transpose()
         split = defaultdict(list)
         for img in self.dataset['images']:
             split[img['split']].append(img)
-        self.imags = split['train']
+        self.images = split['train']
         self.vocab = vocab
+        self.ids = [i for i in range(len(self.images))]
 
     def __getitem__(self, index):
-        vacab = self.vocab
+        vocab = self.vocab
         image_feat = self.feats[index]
         image_feat = torch.Tensor(image_feat)
         caption = []
         caption.append(vocab('<start>'))
-        sentence = random.choice(self.imags[index]['sentences'])
-        caption.append(sentence)
+        sentence = random.choice(self.images[index]['sentences'])['tokens']
+        caption.extend([vocab(word) for word in sentence])
         caption.append(vocab('<end>'))
         target = torch.Tensor(caption)
-        return image_feat, caption
+        return image_feat, target
 
     def __len__(self):
         return len(self.ids)
@@ -66,10 +69,11 @@ def collate_fn(data):
 
 def get_loader(json_file, mat_file, vocab, batch_size, shuffle, num_workers):
     # get the dataset we want
-    captionsData = captionsData(json_file, mat_file, vocab)
+    captionsData = captionData(json_file, mat_file, vocab)
     # interlize th dataset into batch_size
-    data_loader = torch.utils.data.DataLoader(captionsData,
-                                              batch_size,
+    data_loader = torch.utils.data.DataLoader(dataset=captionsData,
+                                              batch_size=batch_size,
                                               shuffle=shuffle,
-                                              num_workers,
-                                              collate_fn)
+                                              num_workers=num_workers,
+                                              collate_fn=collate_fn)
+    return data_loader

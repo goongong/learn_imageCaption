@@ -6,7 +6,7 @@ from torch.nn.utils.rnn import pack_padded_sequence
 import torchvision.models as models
 
 
-class Encoder(nn.Modul):
+class Encoder(nn.Module):
 
     def __init__(self, embed_size, pretrained):
         super(Encoder, self).__init__()
@@ -18,7 +18,7 @@ class Encoder(nn.Modul):
         self.init_weights()
 
     def init_weights(self):
-        self.cnn.fc.weights.data.normal_(0.0, 0.02)
+        self.cnn.fc.weight.data.normal_(0.0, 0.02)
         self.cnn.fc.bias.data.fill_(0)
 
     def forward(self, imgs, pretrained):
@@ -26,23 +26,29 @@ class Encoder(nn.Modul):
         return features
 
 
-def Decoder(nn.Module):
-    def __init__(self, vocab_size, embed_size, hidden_size):
+class Decoder(nn.Module):
+
+    def __init__(self, in_features, vocab_size, embed_size, hidden_size):
         super(Decoder, self).__init__()
+        self.fc = nn.Linear(in_features, embed_size)
         self.rnn = nn.LSTM(embed_size, hidden_size, 1)
         self.linear = nn.Linear(hidden_size, vocab_size)
-        self.embedder = nn.embedder(vocab_size, embed_size)
+        self.embedder = nn.Embedding(vocab_size, embed_size)
         self.init_weights()
 
     def init_weights(self):
-        self.embedder.weights.data.uniform_(-0.1, 0.1)
-        self.linear.weights.data.uniform_(0.1, 0.1)
+        self.embedder.weight.data.uniform_(-0.1, 0.1)
+        self.linear.weight.data.uniform_(0.1, 0.1)
         self.linear.bias.data.fill_(0)
 
     def forward(self, features, captions, lengths):
-        embeddings = self.embedder(captions[:-1])
-        packed_embeddings = torch.cat([features, embeddings], 0)
-        packed_embeddings = pack_padded_sequence(pack_padded_sequence, lengths)
-        out, _ = self.rnn(pack_padded_sequence)
+        img_features = self.fc(features).unsqueeze(1)
+        # print(img_features.size())
+        embeddings = self.embedder(captions)
+        # print(embeddings.size())
+        packed_embeddings = torch.cat([img_features, embeddings], 1)
+        packed_embeddings = pack_padded_sequence(
+            packed_embeddings, lengths, batch_first=True)
+        out, _ = self.rnn(packed_embeddings)
         out = self.linear(out[0])
         return out
