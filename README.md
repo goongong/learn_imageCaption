@@ -15,9 +15,10 @@ conditioned on the current word and previous state.
 ## Dependencies
 The code are requires pyTorch, if you want to run the code, please install the pytorch.
 we only tested the code on OSX. so if you're on OSX, you can install pytorch as following:
-- `$ pip install http://download.pytorch.org/whl/torch-0.1.12.post2-cp27-none-macosx_10_7_x86_64.whl`
-- `$ pip install torchvision`
-
+```bash
+$ pip install http://download.pytorch.org/whl/torch-0.1.12.post2-cp27-none-macosx_10_7_x86_64.whl
+$ pip install torchvision
+```
 
 ## Get started
 1. **Get the code.** `$ git clone the repositories`
@@ -26,3 +27,5 @@ we only tested the code on OSX. so if you're on OSX, you can install pytorch as 
 3. **Train model.** `$ python dirve.py`
 4. **Evaluate the result.** `$ python eval_image.py`
 achieve the image2caption according the google paper
+
+## Acknowledgements
