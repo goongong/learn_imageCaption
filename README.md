@@ -17,7 +17,7 @@ conditioned on the current word and previous state.
 
 ## Get started
 1. **Get the code.** `$ git clone the repositories`
-2. **Get the datset.** `$ you can download the dataset [here](ttp://cs.stanford.edu/people/karpathy/deepimagesent/).`
+2. **Get the datset.** `$ you can download the dataset [here](http://cs.stanford.edu/people/karpathy/deepimagesent/)`
 3. **Get the vocab**. `$ python build_vocab.py`
 3. **train model.** `$ python dirve.py`
 4. **compare the predict sentence and the labeled captions.** `$ python eval_image.py
